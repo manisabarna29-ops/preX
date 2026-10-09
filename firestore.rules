@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny-all catch-all rule
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'manisabarna29@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for User Profile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role']) &&
+             data.keys().hasOnly(['uid', 'name', 'email', 'college', 'degree', 'department', 'gradYear', 'careerInterests', 'preferredLanguage', 'role', 'readinessScore', 'createdAt', 'updatedAt']) &&
+             data.uid is string && data.uid.size() <= 128 && data.uid == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.role in ['student', 'admin'];
+    }
+
+    // Validation helper for Quiz Attempt
+    function isValidQuizAttempt(data) {
+      return data.keys().hasAll(['id', 'userId', 'category', 'score', 'totalQuestions']) &&
+             data.keys().hasOnly(['id', 'userId', 'category', 'topic', 'score', 'totalQuestions', 'correctCount', 'timeSpentSeconds', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 && data.userId == request.auth.uid &&
+             data.category is string && data.category.size() <= 60 &&
+             data.score is number && data.score >= 0 &&
+             data.totalQuestions is number && data.totalQuestions > 0;
+    }
+
+    // Validation helper for Coding Submission
+    function isValidCodingSubmission(data) {
+      return data.keys().hasAll(['id', 'userId', 'problemId', 'language', 'verdict']) &&
+             data.keys().hasOnly(['id', 'userId', 'problemId', 'language', 'verdict', 'passedTests', 'totalTests', 'codeSnippet', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 && data.userId == request.auth.uid &&
+             data.problemId is string && data.problemId.size() <= 100 &&
+             data.language is string && data.language.size() <= 30 &&
+             data.verdict in ['Accepted', 'Wrong Answer', 'Time Limit Exceeded', 'Runtime Error'];
+    }
+
+    // Validation helper for Interview Session
+    function isValidInterviewSession(data) {
+      return data.keys().hasAll(['id', 'userId', 'interviewType', 'overallScore']) &&
+             data.keys().hasOnly(['id', 'userId', 'interviewType', 'targetCompany', 'targetRole', 'overallScore', 'relevanceScore', 'structureScore', 'clarityScore', 'communicationScore', 'summaryFeedback', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 && data.userId == request.auth.uid &&
+             data.interviewType is string && data.interviewType.size() <= 50 &&
+             data.overallScore is number && data.overallScore >= 0 && data.overallScore <= 100;
+    }
+
+    // User profiles collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidUserProfile(incoming()) && incoming().uid == existing().uid;
+      allow delete: if isAdmin();
+    }
+
+    // Quiz attempts collection
+    match /quiz_attempts/{attemptId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(attemptId) && isValidQuizAttempt(incoming());
+      allow update: if false; // Attempts are immutable records
+      allow delete: if isAdmin();
+    }
+
+    // Coding submissions collection
+    match /coding_submissions/{submissionId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(submissionId) && isValidCodingSubmission(incoming());
+      allow update: if false; // Submissions are immutable records
+      allow delete: if isAdmin();
+    }
+
+    // Interview sessions collection
+    match /interview_sessions/{sessionId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(sessionId) && isValidInterviewSession(incoming());
+      allow update: if false; // Sessions are immutable records
+      allow delete: if isAdmin();
+    }
+  }
+}

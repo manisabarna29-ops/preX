@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Student profile, placement readiness metrics, and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 200 },
+        "college": { "type": "string", "maxLength": 150 },
+        "degree": { "type": "string", "maxLength": 100 },
+        "department": { "type": "string", "maxLength": 100 },
+        "gradYear": { "type": "string", "maxLength": 10 },
+        "careerInterests": { "type": "string", "maxLength": 200 },
+        "preferredLanguage": { "type": "string", "maxLength": 20 },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "readinessScore": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Records student assessment and practice quiz attempts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "maxLength": 60 },
+        "topic": { "type": "string", "maxLength": 100 },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "correctCount": { "type": "number" },
+        "timeSpentSeconds": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "category", "score", "totalQuestions"]
+    },
+    "CodingSubmission": {
+      "title": "CodingSubmission",
+      "description": "Records student coding challenge solutions and verdicts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "problemId": { "type": "string", "maxLength": 100 },
+        "language": { "type": "string", "maxLength": 30 },
+        "verdict": { "type": "string", "enum": ["Accepted", "Wrong Answer", "Time Limit Exceeded", "Runtime Error"] },
+        "passedTests": { "type": "number" },
+        "totalTests": { "type": "number" },
+        "codeSnippet": { "type": "string", "maxLength": 10000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "problemId", "language", "verdict"]
+    },
+    "InterviewSession": {
+      "title": "InterviewSession",
+      "description": "Records AI mock interview sessions, questions, and evaluations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "interviewType": { "type": "string", "maxLength": 50 },
+        "targetCompany": { "type": "string", "maxLength": 80 },
+        "targetRole": { "type": "string", "maxLength": 80 },
+        "overallScore": { "type": "number" },
+        "relevanceScore": { "type": "number" },
+        "structureScore": { "type": "number" },
+        "clarityScore": { "type": "number" },
+        "communicationScore": { "type": "number" },
+        "summaryFeedback": { "type": "string", "maxLength": 4000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "interviewType", "overallScore"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile with academic details, preferences, and permissions"
+    },
+    "/quiz_attempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttempt" },
+      "description": "Assessment and practice scores for individual students"
+    },
+    "/coding_submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/CodingSubmission" },
+      "description": "Coding challenge submissions"
+    },
+    "/interview_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/InterviewSession" },
+      "description": "Mock interview results, transcript evaluation, and feedback"
+    }
+  }
+}

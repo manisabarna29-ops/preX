@@ -1,0 +1,6 @@
+{
+  "name": "PrepSphere AI - Placement Preparation Portal",
+  "description": "AI-Powered Placement Preparation Portal featuring 3D interactive dashboard, aptitude and coding modules, real-time mock interviews, 24/7 AI voice agent, and multilingual analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
